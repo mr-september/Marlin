@@ -92,17 +92,18 @@
 #ifndef HEATER_0_PIN
   #define HEATER_0_PIN                     P2_07
 #endif
-#if HOTENDS == 1 && DISABLED(HEATERS_PARALLEL)
-  #ifndef FAN1_PIN
-    #define FAN1_PIN                       P2_04
+// Larry note: Force pin 2_04 to fan because those conditionals seem outdated, can't find in config.h
+//#if HOTENDS == 1 && DISABLED(HEATERS_PARALLEL)
+  #ifndef FAN_PIN
+    #define FAN_PIN                       P2_04
   #endif
-#else
-  #ifndef HEATER_1_PIN
-    #define HEATER_1_PIN                   P2_04
-  #endif
-#endif
-#ifndef FAN_PIN
-  #define FAN_PIN                          P2_03
+//#else
+//  #ifndef HEATER_1_PIN
+//    #define HEATER_1_PIN                   P2_04
+//  #endif
+//#endif
+#ifndef E0_AUTO_FAN_PIN
+  #define E0_AUTO_FAN_PIN                          P2_03
 #endif
 #ifndef HEATER_BED_PIN
   #define HEATER_BED_PIN                   P2_05

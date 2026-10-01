@@ -13,7 +13,7 @@ back to a reason.
 | Kinematics | Cartesian, bedslinger |
 | Bed | 235 × 235 mm |
 | Nozzle | 0.4 mm |
-| Probe | Factory BLTouch (servo-pin) |
+| Probe | **None fitted.** Manual grid levelling via the front LCD. |
 | Display | Stock Creality TFT (smart/enhanced) |
 | Extruder | **Direct drive** (upgraded from stock geared) |
 | Z axis | **Dual-Z, two motors wired in parallel** — the firmware sees a single Z stepper. No dual-Z support configured. |
@@ -21,6 +21,13 @@ back to a reason.
 The dual-Z modification is invisible to firmware: two motors share one step/dir pin.
 That means no `Z2_*` options are used and Z calibration is a mechanical procedure, not a
 firmware one.
+
+**There is no probe on this machine.** An earlier version of this file claimed a
+"Factory BLTouch (servo-pin)". That was an unverified assumption and it was wrong — the
+config has `BLTOUCH` commented out, no `Z_MIN_PROBE_PIN`, and all probe/levelling options
+(`MANUAL_PROBE_START_Z`, `LCD_PROBE_Z_RANGE`) commented out. Bed levelling is done
+manually from the LCD (`LEVEL_BED_CORNERS`, `MESH_TEST_*` grid options). Do not enable
+BLTouch in any port: with a probe configured but none fitted, `G28` drives Z into the bed.
 
 ## Tuning history
 

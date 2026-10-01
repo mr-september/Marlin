@@ -60,6 +60,27 @@ Power loss recovery was disabled in favour of SD card support on the LCD. Reason
 recorded — verify before reverting either way. If this was traded for reliability on the
 Creality TFT, note it here.
 
+## Measured build sizes (2026-10-01, PlatformIO 6.2.0)
+
+Real numbers from successful links, not estimates.
+
+| Build | RAM | Flash |
+|---|---|---|
+| **Your committed 2.0.x config** (SKR V1.3 + TMC2208, stock Creality TFT) | 14,788 B / 32,736 — **45.2%** | 183,092 B / 475,136 — **38.5%** |
+| Stock 2.1.x, SKR V1.3 + TMC2208 | 7,172 B / 32,736 — **21.9%** | 98,108 B / 475,136 — **20.6%** |
+| Stock 2.1.x **+ input shaping X&Y** | 8,764 B / 32,736 — **26.8%** | 100,964 B / 475,136 — **21.2%** |
+
+Input shaping costs ~1.6 KB RAM and ~2.9 KB flash. **It fits comfortably**, verified twice
+(clean rebuild reproduced 8,764 / 100,964 exactly, and `M593` is present in the linked
+binary). Verified per the Source Verification Protocol; these are linked, not estimated.
+
+Note the 2.1.x numbers are from a *minimally configured* build (board + drivers only, no
+Creality TFT, no BLTouch, no mesh levelling). Your real 2.1.x port will be larger — likely
+in the same region as the 2.0.x figure above, since that one carries the full feature set.
+
+**Conclusion: there is no flash/RAM obstacle to a 2.1.x upgrade with input shaping on this
+board.** The "blank screen / boot loop" cause must be something else.
+
 ## Known-unknowns / not yet reviewed
 
 These were inherited from the stock config and have **not** been validated on this
@@ -68,8 +89,20 @@ machine. Flagged for the optimisation pass.
 - `DEFAULT_MAX_FEEDRATE { 500, 500, 5, 25 }` — stock bedslinger values, conservative.
 - `DEFAULT_ACCELERATION 500` — very low; likely leaves real speed on the table.
 - Junction deviation / jerk settings in `Configuration_adv.h` — untouched stock values.
-- Input shaping is not a Marlin 2.0 feature; it arrived in 2.1.x for STM32 only, so it
-  is **not** available on this LPC1768 board.
+- Input shaping does not exist in Marlin 2.0.x; it arrived in 2.1.x.
+
+  **Correction (2026-10-01):** an earlier note in this file claimed input shaping was
+  STM32-only and therefore unavailable on this LPC1768. **That was wrong** — it was
+  asserted without checking the source. Verified against Marlin 2.1.x: the only
+  `INPUT_SHAPING` gates in `SanityCheck.h` are *kinematic* (incompatible with COREXZ /
+  COREYZ; requires both axes on CoreXY). `src/HAL/LPC1768/inc/SanityCheck.h` contains
+  zero references, and the implementation lives in `src/gcode/feature/input_shaping/`,
+  not under `HAL/STM32/`. So input shaping **is** available on this board, contingent
+  only on fitting in flash/RAM.
+
+  This materially changes the 2.1.x upgrade calculus: input shaping is one of the main
+  reasons to move, and it is NOT off the table for this machine. The real constraint is
+  measured size, which is not yet known.
 - TMC2208 `TCOOLTHRS`/`TBLANK`/`TPWMTHRS` and driver current sense (`CSRS`) unverified.
 
 ## Build/flash notes
@@ -97,3 +130,16 @@ diagnosed, treat "upgrade Marlin" as a research task, not a maintenance step:
 3. Understand the mechanism before shipping any version bump.
 
 Do not flash an untested firmware version to a working printer.
+
+**Update (2026-10-01):** the earlier related claim — that input shaping is STM32-only and
+therefore unavailable on the Ender's LPC1768 — has been **disproven against the source**.
+Its `SanityCheck` gates are kinematic, not MCU-based, and the implementation is not under
+`HAL/STM32/`. Input shaping is available on both LPC1768 boards, so it cannot be the
+reason either machine was pinned to an older Marlin. Whatever caused the blank screen or
+boot loop remains unidentified.
+
+Note also that the first attempt at this investigation produced three builds that failed
+with `#endif without #if`. That was a self-inflicted error from hand-editing
+`Configuration.h` with naive string replacement inside an `#if`-guarded block, **not** a
+Marlin defect. Discard any such result. When building test configurations, start from the
+stock files under `config/examples/` rather than patching `Configuration.h` by hand.
